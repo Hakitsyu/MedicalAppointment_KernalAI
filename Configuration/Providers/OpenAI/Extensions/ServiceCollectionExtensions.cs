@@ -1,11 +1,12 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Microsoft.SemanticKernel.AI.TextToImage;
+using Microsoft.SemanticKernel.Connectors.AI.OpenAI.TextToImage;
+using Microsoft.SemanticKernel.AI.TextToImage;
+using Microsoft.Extensions.Options;
+using System.Security.Cryptography;
 
 namespace MedicalAppointment_KernalAI.Configuration.Providers.OpenAI.Extensions
 {
@@ -16,6 +17,27 @@ namespace MedicalAppointment_KernalAI.Configuration.Providers.OpenAI.Extensions
             services.AddOpenAISettings(configuration);
 
             services.AddKeyedTransient<IKernelProvider, OpenAIProvider>(OpenAIProvider.Key);
+
+            return services;
+        }
+
+        public static IServiceCollection UseOpenAITextToImage(this IServiceCollection services, IConfiguration configuration)
+        {
+            services.AddOpenAISettings(configuration);
+
+            services.AddSingleton<ITextToImageService>(serviceProvider =>
+            {
+                var configuration = serviceProvider.GetRequiredService<IOptions<OpenAISettings>>()
+                    .Value;
+
+                var httpClient = serviceProvider.GetService<HttpClient>();
+
+                return new OpenAITextToImageService(
+                    configuration.ApiKey,
+                    configuration.OrgId,
+                    httpClient,
+                    serviceProvider.GetService<ILoggerFactory>());
+            });
 
             return services;
         }
